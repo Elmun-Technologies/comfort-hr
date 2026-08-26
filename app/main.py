@@ -70,6 +70,10 @@ async def main() -> None:
     set_bot(bot)
     dp: Dispatcher = build_dispatcher()
 
+    # Webhook o'rnatilgan bo'lsa, uni tozalaymiz — aks holda long polling
+    # Telegram'dan 409 conflict bilan ishlamay qolishi mumkin.
+    await bot.delete_webhook(drop_pending_updates=True)
+
     scheduler = build_scheduler(bot, settings)
     scheduler.start()
 
