@@ -13,9 +13,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY leadbot ./leadbot
 
 RUN mkdir -p /app/data
 
-EXPOSE 8080
-
-CMD ["python", "-m", "app.main"]
+# Fly'da ishga tushiriladigan bot: leadbot (Facebook nomzodlarni saralash boti)
+CMD ["python", "-m", "leadbot.main"]

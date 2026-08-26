@@ -6,7 +6,6 @@
 data/
 logs/
 tests/
-leadbot/
 Dockerfile
 README.md
 requirements-dev.txt
