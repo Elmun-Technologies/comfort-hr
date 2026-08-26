@@ -12,7 +12,9 @@ kill_timeout = "5s"
 
 [env]
 LOG_LEVEL = "INFO"
-
+[mounts]
+  source = "leadbot_data"
+  destination = "/app/data"
 [processes]
 app = "python -m leadbot.main"
 
