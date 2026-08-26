@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+data/
+logs/
+tests/
+leadbot/
+Dockerfile
+README.md
+requirements-dev.txt
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
