@@ -52,3 +52,9 @@ NOT_CONFIGURED = (
 
 GROUP_HEADER_QUALIFIED = "🟢 <b>YANGI NOMZOD — MOS KELADI</b>"
 GROUP_HEADER_NOT_QUALIFIED = "🔴 <b>YANGI NOMZOD — MOS KELMAYDI</b>"
+
+STATS_GROUP_ONLY = (
+    "📊 Analitikani faqat guruh chatida ko'rish mumkin. "
+    "Guruhga /stats deb yozing."
+)
+STATS_ERROR = "Kechirasiz, analitika hisobotini tuzishda xato yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."

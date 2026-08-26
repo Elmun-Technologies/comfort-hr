@@ -164,6 +164,35 @@ Facebook reklama → "Botga yozish" tugmasi → Telegram bot (t.me/BOTUSERNAME)
    `https://t.me/BOTUSERNAME` ni ko'rsating — reklamani ko'rgan odam
    to'g'ridan-to'g'ri botga tushadi va `/start` bilan suhbat boshlanadi.
 
+### 📊 Analitika
+
+Har bir topshirilgan ariza SQLite bazaga saqlanadi (`LEAD_DB_PATH`, default:
+`./data/leadbot.db`). **Guruhdagi istalgan a'zo** (admin bo'lmasa ham) `/stats`
+buyrug'ini yuborib, umumiy statistikani ko'ra oladi:
+
+```
+📊 ANALITIKA
+
+👥 Jami arizalar: 50
+✅ Mos kelgan: 30
+❌ Mos kelmagan: 20
+📅 Bugun: 5
+
+🚫 Rad etish sabablari:
+• Yosh chegarasidan tashqari: 12
+• Toshkentda yashamaydi: 6
+• Grafikka rozi emas: 4
+
+🕘 Oxirgi 10 nomzod:
+🟢 Aliyev Vali — 22 yosh
+🔴 ...
+```
+
+`/stats` faqat `LEAD_GROUP_CHAT_ID` guruhida ishlaydi. Analitika vaqt mintaqasi
+`LEAD_TZ` (default: `Asia/Tashkent`) orqali sozlanadi. Docker/Fly.io'da
+ma'lumot yo'qolmasligi uchun `/app/data` katalogini doimiy volume'ga ulash
+tavsiya etiladi.
+
 ### Talab mezonlarini o'zgartirish
 
 Savollar va matnlar `leadbot/texts.py` da, saralash mantig'i
