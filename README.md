@@ -105,6 +105,7 @@ app/
   scheduler/    Davriy vazifalar (APScheduler)
   web/          amoCRM webhook qabul qiluvchi (FastAPI)
   db/           SQLAlchemy modellari va sessiya
+leadbot/        Facebook reklama uchun lead-qualification bot (mustaqil, quyida)
 tests/          pytest testlari
 ```
 
@@ -112,6 +113,61 @@ tests/          pytest testlari
 
 ```bash
 pip install -r requirements-dev.txt
-ruff check app tests
+ruff check app leadbot tests
 pytest
 ```
+
+---
+
+## Lead-bot — Facebook reklamadan kelgan nomzodlarni saralash
+
+Yuqoridagi amoCRM nazorat botidan **butunlay mustaqil**, alohida, oddiy bot:
+Facebook (Meta) reklamasini ko'rgan odam Telegram botga o'tadi, bot bir necha
+savol beradi, javoblarni vakansiya talablari bilan solishtiradi va natijani
+(mos yoki mos emasligi, sabablari bilan) to'g'ridan-to'g'ri Telegram guruhga
+yuboradi. amoCRM yoki bazaga ehtiyoj yo'q.
+
+```
+Facebook reklama → "Botga yozish" tugmasi → Telegram bot (t.me/BOTUSERNAME)
+                                                    │
+                                     Savollar: ism, yosh, shahar,
+                                     telefon, ish grafigiga rozilikmi
+                                                    │
+                                          Talablar bilan solishtirish
+                                                    │
+                              ┌─────────────────────┴─────────────────────┐
+                              ▼                                           ▼
+                    Nomzodga javob (mos/mos emas)              HR guruhiga to'liq karta
+                                                                (🟢 mos / 🔴 mos emas + sabab)
+```
+
+### Ishga tushirish
+
+1. [@BotFather](https://t.me/BotFather) orqali yangi bot yarating, tokenni oling.
+2. Natijalar yuboriladigan Telegram guruhni yarating, botni guruhga admin
+   qilib qo'shing, guruh ID sini oling (masalan `@getmyid_bot` yoki botni
+   guruhga qo'shib `/start` dan keyin update'lardan ko'rish orqali).
+3. `.env` fayliga to'ldiring:
+   ```
+   LEADBOT_TOKEN=...
+   LEAD_GROUP_CHAT_ID=-100...
+   LEAD_MIN_AGE=18
+   LEAD_MAX_AGE=25
+   LEAD_REQUIRED_CITY=Toshkent
+   ```
+4. Ishga tushiring:
+   ```bash
+   python -m leadbot.main
+   ```
+5. Facebook reklama sozlamalarida (Meta Ads Manager) "Click to Messenger" o'rniga
+   "Click to Telegram" tugmasi/veb-sayt havolasi sifatida
+   `https://t.me/BOTUSERNAME` ni ko'rsating — reklamani ko'rgan odam
+   to'g'ridan-to'g'ri botga tushadi va `/start` bilan suhbat boshlanadi.
+
+### Talab mezonlarini o'zgartirish
+
+Savollar va matnlar `leadbot/texts.py` da, saralash mantig'i
+`leadbot/qualify.py` da — yosh chegarasi va shahar talabi `.env` orqali
+(`LEAD_MIN_AGE`, `LEAD_MAX_AGE`, `LEAD_REQUIRED_CITY`) sozlanadi. Boshqa
+vakansiya uchun savol qo'shish kerak bo'lsa, `leadbot/states.py` ga yangi
+holat, `leadbot/handlers.py` ga tegishli handler qo'shiladi.
