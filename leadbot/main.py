@@ -13,6 +13,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from leadbot.config import get_leadbot_settings
 from leadbot.handlers import router
+from leadbot.storage import init_db
 
 
 def setup_logging(level: str) -> None:
@@ -41,6 +42,9 @@ async def run() -> None:
         logger.warning(
             "LEAD_GROUP_CHAT_ID ko'rsatilmagan — natijalar hech qayerga yuborilmaydi."
         )
+
+    init_db(settings.lead_db_path)
+    logger.info("Analitika bazasi tayyor: %s", settings.lead_db_path)
 
     bot = Bot(
         token=settings.leadbot_token,

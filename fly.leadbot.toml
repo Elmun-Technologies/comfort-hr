@@ -4,7 +4,7 @@
 # app nomini fly.io'da band bo'lmagan nomga o'zgartiring (flyctl launch birinchi
 # marta so'raydi, keyingi deploy'larda shu fayldagi nom ishlatiladi).
 app = "comfort-leadbot"
-primary_region = "waw"
+primary_region = "arn"
 kill_signal = "SIGINT"
 kill_timeout = "5s"
 

@@ -7,6 +7,7 @@ o'z guruhi va o'z talab mezonlariga ega. amoCRM bilan bog'liq emas.
 from __future__ import annotations
 
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,6 +28,12 @@ class LeadBotSettings(BaseSettings):
     lead_max_age: int = Field(default=25, alias="LEAD_MAX_AGE")
     lead_required_city: str = Field(default="Toshkent", alias="LEAD_REQUIRED_CITY")
 
+    # --- Analitika (baza) ---
+    # Arizalar saqlanadigan SQLite fayl yo'li
+    lead_db_path: str = Field(default="./data/leadbot.db", alias="LEAD_DB_PATH")
+    # Analitika hisobotida ishlatiladigan vaqt mintaqasi
+    lead_tz: str = Field(default="Asia/Tashkent", alias="LEAD_TZ")
+
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
     @field_validator("lead_group_chat_id", mode="before")
@@ -39,6 +46,10 @@ class LeadBotSettings(BaseSettings):
     @property
     def is_configured(self) -> bool:
         return bool(self.leadbot_token) and self.lead_group_chat_id != 0
+
+    @property
+    def timezone(self) -> ZoneInfo:
+        return ZoneInfo(self.lead_tz)
 
 
 @lru_cache

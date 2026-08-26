@@ -16,6 +16,7 @@ from leadbot.config import LeadBotSettings, get_leadbot_settings
 from leadbot.keyboards import CONTACT_KB, REMOVE_KB, YES_NO_KB
 from leadbot.qualify import Answers, Verdict, qualify
 from leadbot.states import Application
+from leadbot.storage import add_application, build_report
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,22 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
 async def cmd_cancel(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(texts.CANCELLED, reply_markup=REMOVE_KB)
+
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message) -> None:
+    """Analitika hisoboti — faqat guruh chatida ishlaydi."""
+    settings = get_leadbot_settings()
+    if message.chat.id != settings.lead_group_chat_id:
+        await message.answer(texts.STATS_GROUP_ONLY)
+        return
+    try:
+        report = build_report(settings.lead_db_path, settings.timezone)
+    except Exception:  # noqa: BLE001
+        logger.exception("Analitika hisobotini tuzishda xato")
+        await message.answer(texts.STATS_ERROR)
+        return
+    await message.answer(report, parse_mode="HTML")
 
 
 @router.message(Application.full_name, F.text)
@@ -137,6 +154,12 @@ async def on_schedule(callback: CallbackQuery, state: FSMContext) -> None:
             texts.RESULT_NOT_QUALIFIED.format(name=answers.full_name, reasons=reasons),
             reply_markup=REMOVE_KB,
         )
+
+    # Arizani analitika bazasiga saqlash
+    try:
+        add_application(settings.lead_db_path, answers, verdict)
+    except Exception:  # noqa: BLE001
+        logger.exception("Arizani bazaga saqlashda xato")
 
     await _notify_group(callback, answers, verdict, settings)
     await state.clear()
