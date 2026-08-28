@@ -12,10 +12,12 @@ from leadbot.storage import add_application, build_report, count_applications, i
 def _answers(**overrides: object) -> Answers:
     base = {
         "full_name": "Aliyev Vali",
+        "gender": "male",
         "age": 22,
         "lives_in_city": True,
         "phone": "+998901234567",
-        "accepts_schedule": True,
+        "experience": "2 yil sotuvchi",
+        "resume_info": "",
     }
     base.update(overrides)
     return Answers(**base)
@@ -37,8 +39,16 @@ def test_init_db_creates_table_and_counts_empty() -> None:
 def test_add_and_count_applications() -> None:
     path = _tmp_db()
     init_db(path)
-    add_application(path, _answers(), qualify(_answers(), min_age=18, max_age=25, required_city="Toshkent"))
-    add_application(path, _answers(age=30), qualify(_answers(age=30), min_age=18, max_age=25, required_city="Toshkent"))
+    add_application(
+        path,
+        _answers(),
+        qualify(_answers(), min_age=18, max_age=30, required_city="Toshkent"),
+    )
+    add_application(
+        path,
+        _answers(age=35),
+        qualify(_answers(age=35), min_age=18, max_age=30, required_city="Toshkent"),
+    )
     assert count_applications(path) == 2
 
 
@@ -57,13 +67,13 @@ def test_build_report_shows_totals_and_reasons() -> None:
     from zoneinfo import ZoneInfo
 
     # Mos kelgan
-    ok = qualify(_answers(), min_age=18, max_age=25, required_city="Toshkent")
+    ok = qualify(_answers(), min_age=18, max_age=30, required_city="Toshkent")
     add_application(path, _answers(), ok)
     # Yosh + shahar sababi bilan rad
     bad = qualify(
         _answers(age=40, lives_in_city=False),
         min_age=18,
-        max_age=25,
+        max_age=30,
         required_city="Toshkent",
     )
     add_application(path, _answers(age=40, lives_in_city=False), bad)
@@ -75,3 +85,23 @@ def test_build_report_shows_totals_and_reasons() -> None:
     assert "Mos kelmagan: 1" in plain
     assert "Yosh chegarasidan tashqari" in report
     assert "Toshkentda yashamaydi" in report
+
+
+def test_gender_stored_in_db() -> None:
+    """Gender ma'lumoti bazada saqlanishi kerak."""
+    path = _tmp_db()
+    init_db(path)
+    female_answers = _answers(full_name="Karimova Nilufar", gender="female")
+    verdict = qualify(female_answers, min_age=18, max_age=30, required_city="Toshkent")
+    add_application(path, female_answers, verdict)
+    assert count_applications(path) == 1
+
+
+def test_experience_stored_in_db() -> None:
+    """Staj ma'lumoti bazada saqlanishi kerak."""
+    path = _tmp_db()
+    init_db(path)
+    exp_answers = _answers(experience="3 yil dastavka")
+    verdict = qualify(exp_answers, min_age=18, max_age=30, required_city="Toshkent")
+    add_application(path, exp_answers, verdict)
+    assert count_applications(path) == 1

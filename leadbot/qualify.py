@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
 class Answers:
     full_name: str
+    gender: str  # "male" yoki "female"
     age: int
     lives_in_city: bool
     phone: str
-    accepts_schedule: bool
+    experience: str = ""
+    resume_info: str = ""
 
 
 @dataclass(frozen=True)
@@ -33,9 +35,5 @@ def qualify(answers: Answers, *, min_age: int, max_age: int, required_city: str)
     if not answers.lives_in_city:
         reasons.append(f"Doimiy {required_city}da istiqomat qilish talab etiladi (yotoqxona yo'q)")
         codes.append("city")
-
-    if not answers.accepts_schedule:
-        reasons.append("Belgilangan ish grafigiga rozilik talab etiladi")
-        codes.append("schedule")
 
     return Verdict(is_qualified=not reasons, reasons=reasons, reject_codes=tuple(codes))

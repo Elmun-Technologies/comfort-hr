@@ -17,7 +17,6 @@ from leadbot.qualify import Answers, Verdict
 REJECT_LABELS: dict[str, str] = {
     "age": "Yosh chegarasidan tashqari",
     "city": "Toshkentda yashamaydi",
-    "schedule": "Grafikka rozi emas",
 }
 
 
@@ -29,6 +28,18 @@ def _connect(db_path: str) -> sqlite3.Connection:
     return conn
 
 
+def _ensure_new_columns(conn: sqlite3.Connection) -> None:
+    """Mavjud bazaga yangi ustunlarni qo'shadi (migration)."""
+    cur = conn.execute("PRAGMA table_info(applications)")
+    existing = {row["name"] for row in cur.fetchall()}
+    if "gender" not in existing:
+        conn.execute("ALTER TABLE applications ADD COLUMN gender TEXT NOT NULL DEFAULT ''")
+    if "experience" not in existing:
+        conn.execute("ALTER TABLE applications ADD COLUMN experience TEXT NOT NULL DEFAULT ''")
+    if "resume_info" not in existing:
+        conn.execute("ALTER TABLE applications ADD COLUMN resume_info TEXT NOT NULL DEFAULT ''")
+
+
 def init_db(db_path: str) -> None:
     """Agar baza bo'lmasa, jadvalni yaratadi."""
     conn = _connect(db_path)
@@ -38,16 +49,19 @@ def init_db(db_path: str) -> None:
             CREATE TABLE IF NOT EXISTS applications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT NOT NULL,
+                gender TEXT NOT NULL DEFAULT '',
                 age INTEGER NOT NULL,
                 lives_in_city INTEGER NOT NULL,
                 phone TEXT NOT NULL,
-                accepts_schedule INTEGER NOT NULL,
+                experience TEXT NOT NULL DEFAULT '',
+                resume_info TEXT NOT NULL DEFAULT '',
                 is_qualified INTEGER NOT NULL,
                 reject_codes TEXT NOT NULL,
                 created_at TEXT NOT NULL
             )
             """
         )
+        _ensure_new_columns(conn)
         conn.commit()
     finally:
         conn.close()
@@ -69,16 +83,19 @@ def add_application(
         conn.execute(
             """
             INSERT INTO applications (
-                full_name, age, lives_in_city, phone, accepts_schedule,
+                full_name, gender, age, lives_in_city, phone,
+                experience, resume_info,
                 is_qualified, reject_codes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 answers.full_name,
+                answers.gender,
                 answers.age,
                 int(answers.lives_in_city),
                 answers.phone,
-                int(answers.accepts_schedule),
+                answers.experience,
+                answers.resume_info,
                 int(verdict.is_qualified),
                 codes,
                 created_at.isoformat(),
@@ -134,10 +151,15 @@ def build_report(db_path: str, tz: ZoneInfo) -> str:
     )
 
     # Oxirgi 10 ta ariza (eng yangi birinchi)
+    from leadbot.texts import GENDER_LABELS
+
     recent_lines = []
     for r in rows[:10]:
         mark = "🟢" if r["is_qualified"] else "🔴"
-        recent_lines.append(f"{mark} {r['full_name']} — {r['age']} yosh")
+        gender = r["gender"] if "gender" in r.keys() else ""
+        gender_label = GENDER_LABELS.get(gender, "")
+        gender_str = f" ({gender_label})" if gender_label else ""
+        recent_lines.append(f"{mark} {r['full_name']}{gender_str} — {r['age']} yosh")
 
     lines = [
         "📊 <b>ANALITIKA</b>\n",
