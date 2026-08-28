@@ -7,7 +7,9 @@ from aiogram.fsm.state import State, StatesGroup
 
 class Application(StatesGroup):
     full_name = State()
+    gender = State()
     age = State()
     city = State()
     phone = State()
-    schedule = State()
+    experience = State()
+    resume = State()

@@ -10,7 +10,7 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-from leadbot.texts import BTN_NO, BTN_SHARE_CONTACT, BTN_YES
+from leadbot.texts import BTN_MALE, BTN_FEMALE, BTN_NO, BTN_SHARE_CONTACT, BTN_YES, BTN_SKIP_RESUME
 
 YES_NO_KB = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -18,6 +18,21 @@ YES_NO_KB = InlineKeyboardMarkup(
             InlineKeyboardButton(text=BTN_YES, callback_data="yes"),
             InlineKeyboardButton(text=BTN_NO, callback_data="no"),
         ]
+    ]
+)
+
+GENDER_KB = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text=BTN_MALE, callback_data="gender:male"),
+            InlineKeyboardButton(text=BTN_FEMALE, callback_data="gender:female"),
+        ]
+    ]
+)
+
+RESUME_SKIP_KB = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text=BTN_SKIP_RESUME, callback_data="skip_resume")],
     ]
 )
 
