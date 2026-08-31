@@ -13,9 +13,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY leadbot ./leadbot
 
 RUN mkdir -p /app/data
 
-EXPOSE 8080
-
+# Fly'da ishga tushiriladigan bot: Comfort HR — nomzodlarni vakansiya talablari
+# bo'yicha saralash + (sozlangan bo'lsa) amoCRM jarayon nazorati
 CMD ["python", "-m", "app.main"]

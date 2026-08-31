@@ -10,3 +10,4 @@ venv/
 data/
 logs/
 .DS_Store
+.venv-test/

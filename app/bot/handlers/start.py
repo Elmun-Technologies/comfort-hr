@@ -6,9 +6,11 @@ import logging
 
 from aiogram import Router
 from aiogram.filters import Command, CommandObject
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.handlers.candidates import start_candidate_application
 from app.bot.keyboards import main_menu
 from app.config import get_settings
 from app.db.base import Role
@@ -20,7 +22,13 @@ router = Router(name="start")
 
 
 @router.message(Command("start"))
-async def cmd_start(message: Message, command: CommandObject, session: AsyncSession, employee: Employee | None) -> None:
+async def cmd_start(
+    message: Message,
+    command: CommandObject,
+    session: AsyncSession,
+    state: FSMContext,
+    employee: Employee | None,
+) -> None:
     if employee is not None:
         await message.answer(
             f"Xush kelibsiz, {employee.full_name}!\nRol: {employee.role.label_uz}",
@@ -49,12 +57,9 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
         return
 
     if not code:
-        await message.answer(
-            "Salom! Bu Comfort HR nazorat boti.\n\n"
-            "Botdan foydalanish uchun sizga rahbaringiz yoki HR bo'limi tomonidan "
-            "yuborilgan taklif kodi kerak. Kodni shunday yuboring:\n"
-            "<code>/start SIZNING_KODINGIZ</code>"
-        )
+        # Taklif kodi yo'q va admin ro'yxatida yo'q — vakansiya nomzodi
+        # deb hisoblaymiz va ariza oqimini boshlaymiz.
+        await start_candidate_application(message, state)
         return
 
     invited = await get_employee_by_invite(session, code)

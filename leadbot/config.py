@@ -25,7 +25,7 @@ class LeadBotSettings(BaseSettings):
 
     # --- Talab mezonlari (Comfort tekstil: Sotuvchi/Dastavka yigitlar) ---
     lead_min_age: int = Field(default=18, alias="LEAD_MIN_AGE")
-    lead_max_age: int = Field(default=25, alias="LEAD_MAX_AGE")
+    lead_max_age: int = Field(default=30, alias="LEAD_MAX_AGE")
     lead_required_city: str = Field(default="Toshkent", alias="LEAD_REQUIRED_CITY")
 
     # --- Analitika (baza) ---

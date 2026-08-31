@@ -61,14 +61,24 @@ async def main() -> None:
     setup_logging(settings.log_level)
     logger.info("Comfort HR bot ishga tushmoqda...")
 
-    if not settings.bot_token:
-        raise SystemExit("BOT_TOKEN sozlanmagan. .env faylini to'ldiring (.env.example'ga qarang).")
+    if not settings.effective_bot_token:
+        raise SystemExit(
+            "BOT_TOKEN sozlanmagan. .env faylini to'ldiring (.env.example'ga qarang)."
+        )
+    if not settings.bot_token and settings.leadbot_token:
+        logger.warning(
+            "BOT_TOKEN bo'sh — LEADBOT_TOKEN ishlatilmoqda (eski Fly sozlamalari iloji)."
+        )
 
     await init_db()
 
     bot = build_bot(settings)
     set_bot(bot)
     dp: Dispatcher = build_dispatcher()
+
+    # Webhook o'rnatilgan bo'lsa, uni tozalaymiz — aks holda long polling
+    # Telegram'dan 409 conflict bilan ishlamay qolishi mumkin.
+    await bot.delete_webhook(drop_pending_updates=True)
 
     scheduler = build_scheduler(bot, settings)
     scheduler.start()

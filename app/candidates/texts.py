@@ -1,26 +1,22 @@
-"""Bot matnlari (o'zbek tilida)."""
+"""Nomzodlarni saralash bo'limi matnlari (o'zbek tilida)."""
 
 from __future__ import annotations
 
 WELCOME = (
     "Assalomu alaykum! 👋\n\n"
-    "<b>Comfort</b> — Sotuvchi/Dastavka yigit vakansiyasiga murojaat qilganingiz uchun rahmat.\n\n"
-    "🧑🏻‍💼 Lavozim: Sotuvchi/Dastavka yigit\n"
+    "<b>Comfort</b> — Sotuvchi/Dastavka vakansiyasiga murojaat qilganingiz uchun rahmat.\n\n"
+    "🧑🏻‍💼 Lavozim: Sotuvchi/Dastavka\n"
     "💵 Oylik: 10 000 000 – 15 000 000 so'm\n"
-    "⏰ Ish grafigi: 08:00–19:00, oyiga 1 kun dam\n"
     "📌 Manzil: Toshkent, O'rikzor bozori atrofida\n\n"
-    "Talablarga mos kelasizmi — buni bilish uchun bir nechta savol beraman. "
+    "Talablarga mos kelishini bilish uchun bir nechta savol beraman. "
     "Javoblaringiz to'g'ridan-to'g'ri HR bo'limiga yuboriladi."
 )
 
 ASK_FULL_NAME = "1️⃣ Ism va familiyangizni to'liq kiriting:"
-ASK_FULL_NAME_INVALID = (
-    "Ism va familiya 3 dan 80 belgigacha bo'lishi kerak. Iltimos, qaytadan kiriting:"
-)
 ASK_GENDER = "2️⃣ Jinsingizni tanlang:"
 ASK_AGE = "3️⃣ Necha yoshdasiz? (faqat raqamda, masalan: 22)"
 ASK_AGE_INVALID = "Iltimos, yoshingizni faqat raqamda kiriting (masalan: 22)."
-ASK_CITY = "4️⃣ Doimiy Toshkent shahrida istiqomat qilasizmi? (Yotoqxona berilmaydi)"
+ASK_CITY = "4️⃣ Doimiy {city}da istiqomat qilasizmi? (Yotoqxona berilmaydi)"
 ASK_PHONE = (
     "5️⃣ Telefon raqamingizni yuboring — pastdagi tugma orqali yoki qo'lda kiriting "
     "(masalan: +998901234567):"
@@ -30,11 +26,8 @@ ASK_EXPERIENCE = (
     "6️⃣ Ish tajribangiz (staj) bormi? Qisqacha yozib bering:\n"
     "(Masalan: \"2 yil sotuvchi\", \"3 oy dastavka\", \"tajribam yo'q\")"
 )
-ASK_EXPERIENCE_INVALID = (
-    "Iltimos, ish tajribangiz haqida qisqacha yozing (1-500 belgi)."
-)
 ASK_RESUME = (
-    "7️⃣ Rezume yoki tajribangiz haqida ovozli xabar (goloso) yuborishingiz mumkin.\n"
+    "7️⃣ Rezume yoki tajribangiz haqida ovozli xabar (golos) yuborishingiz mumkin.\n"
     "Shuningdek, fayl (PDF, DOC) ko'rinishida ham yuborishingiz mumkin.\n\n"
     "Agar yubormoqchi bo'lmasangiz, pastdagi tugmani bosing 👇"
 )
@@ -63,18 +56,13 @@ RESULT_NOT_QUALIFIED = (
 )
 
 CANCELLED = "Ariza bekor qilindi. Qaytadan boshlash uchun /start ni bosing."
-ALREADY_SUBMITTED = (
-    "Siz allaqachon ariza topshirgansiz. Qayta topshirish uchun /start ni bosing."
+STATS_GROUP_ONLY = (
+    "📊 Analitikani faqat HR guruhida ko'rish mumkin. Guruhda /stats deb yozing."
 )
-NOT_CONFIGURED = (
-    "Bot hozircha sozlanmagan (LEADBOT_TOKEN / LEAD_GROUP_CHAT_ID). Administratorga murojaat qiling."
+STATS_ERROR = (
+    "Kechirasiz, analitika hisobotini tuzishda xato yuz berdi. "
+    "Iltimos, keyinroq qayta urinib ko'ring."
 )
 
 GROUP_HEADER_QUALIFIED = "🟢 <b>YANGI NOMZOD — MOS KELADI</b>"
 GROUP_HEADER_NOT_QUALIFIED = "🔴 <b>YANGI NOMZOD — MOS KELMAYDI</b>"
-
-STATS_GROUP_ONLY = (
-    "📊 Analitikani faqat guruh chatida ko'rish mumkin. "
-    "Guruhga /stats deb yozing."
-)
-STATS_ERROR = "Kechirasiz, analitika hisobotini tuzishda xato yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
