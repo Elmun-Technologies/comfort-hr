@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from zoneinfo import ZoneInfo
 
 from leadbot.qualify import Answers, qualify
 from leadbot.storage import add_application, build_report, count_applications, init_db
@@ -45,7 +46,6 @@ def test_add_and_count_applications() -> None:
 def test_build_report_empty_db() -> None:
     path = _tmp_db()
     init_db(path)
-    from zoneinfo import ZoneInfo
 
     report = build_report(path, ZoneInfo("Asia/Tashkent"))
     assert "Hali hech qanday ariza topshirilmagan" in report
@@ -54,7 +54,6 @@ def test_build_report_empty_db() -> None:
 def test_build_report_shows_totals_and_reasons() -> None:
     path = _tmp_db()
     init_db(path)
-    from zoneinfo import ZoneInfo
 
     # Mos kelgan
     ok = qualify(_answers(), min_age=18, max_age=25, required_city="Toshkent")
@@ -75,3 +74,32 @@ def test_build_report_shows_totals_and_reasons() -> None:
     assert "Mos kelmagan: 1" in plain
     assert "Yosh chegarasidan tashqari" in report
     assert "Toshkentda yashamaydi" in report
+
+
+def test_recent_list_is_limited_to_ten() -> None:
+    path = _tmp_db()
+    init_db(path)
+    for i in range(15):
+        answers = _answers(full_name=f"Nomzod {i}")
+        add_application(path, answers, qualify(answers, min_age=18, max_age=25, required_city="Toshkent"))
+
+    report = build_report(path, ZoneInfo("Asia/Tashkent"))
+    assert "Jami arizalar: 15" in report.replace("<b>", "").replace("</b>", "")
+    # Faqat oxirgi 10 tasi ro'yxatda, eng yangisi (Nomzod 14) birinchi bo'lishi kerak
+    assert report.count("Nomzod") == 10
+    assert "Nomzod 14" in report
+    assert "Nomzod 0" not in report
+
+
+def test_long_names_are_truncated_in_report() -> None:
+    path = _tmp_db()
+    init_db(path)
+    long_name = "A" * 80
+    answers = _answers(full_name=long_name)
+    add_application(path, answers, qualify(answers, min_age=18, max_age=25, required_city="Toshkent"))
+
+    report = build_report(path, ZoneInfo("Asia/Tashkent"))
+    assert long_name not in report
+    assert "A" * 39 + "…" in report
+    # Hisobot Telegram sendMessage limitidan (4096) ancha past bo'lishi kerak
+    assert len(report) < 2000

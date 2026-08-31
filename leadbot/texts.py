@@ -14,6 +14,9 @@ WELCOME = (
 )
 
 ASK_FULL_NAME = "1️⃣ Ism va familiyangizni to'liq kiriting:"
+ASK_FULL_NAME_INVALID = (
+    "Ism va familiya 3 dan 80 belgigacha bo'lishi kerak. Iltimos, qaytadan kiriting:"
+)
 ASK_AGE = "2️⃣ Necha yoshdasiz? (faqat raqamda, masalan: 22)"
 ASK_AGE_INVALID = "Iltimos, yoshingizni faqat raqamda kiriting (masalan: 22)."
 ASK_CITY = "3️⃣ Doimiy Toshkent shahrida istiqomat qilasizmi? (Yotoqxona berilmaydi)"

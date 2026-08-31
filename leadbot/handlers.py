@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 router = Router(name="leadbot")
 
 PHONE_RE = re.compile(r"^\+?\d{9,13}$")
+MIN_FULL_NAME_LENGTH = 3
+MAX_FULL_NAME_LENGTH = 80
 
 
 def _normalize_phone(raw: str) -> str | None:
@@ -62,18 +64,17 @@ async def cmd_stats(message: Message) -> None:
         return
     try:
         report = build_report(settings.lead_db_path, settings.timezone)
+        await message.answer(report, parse_mode="HTML")
     except Exception:  # noqa: BLE001
-        logger.exception("Analitika hisobotini tuzishda xato")
+        logger.exception("Analitika hisobotini tuzish yoki yuborishda xato")
         await message.answer(texts.STATS_ERROR)
-        return
-    await message.answer(report, parse_mode="HTML")
 
 
 @router.message(Application.full_name, F.text)
 async def on_full_name(message: Message, state: FSMContext) -> None:
     full_name = message.text.strip()
-    if len(full_name) < 3:
-        await message.answer(texts.ASK_FULL_NAME)
+    if not (MIN_FULL_NAME_LENGTH <= len(full_name) <= MAX_FULL_NAME_LENGTH):
+        await message.answer(texts.ASK_FULL_NAME_INVALID)
         return
     await state.update_data(full_name=full_name)
     await message.answer(texts.ASK_AGE)
