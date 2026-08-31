@@ -61,8 +61,14 @@ async def main() -> None:
     setup_logging(settings.log_level)
     logger.info("Comfort HR bot ishga tushmoqda...")
 
-    if not settings.bot_token:
-        raise SystemExit("BOT_TOKEN sozlanmagan. .env faylini to'ldiring (.env.example'ga qarang).")
+    if not settings.effective_bot_token:
+        raise SystemExit(
+            "BOT_TOKEN sozlanmagan. .env faylini to'ldiring (.env.example'ga qarang)."
+        )
+    if not settings.bot_token and settings.leadbot_token:
+        logger.warning(
+            "BOT_TOKEN bo'sh — LEADBOT_TOKEN ishlatilmoqda (eski Fly sozlamalari iloji)."
+        )
 
     await init_db()
 

@@ -17,5 +17,6 @@ COPY leadbot ./leadbot
 
 RUN mkdir -p /app/data
 
-# Fly'da ishga tushiriladigan bot: leadbot (Facebook nomzodlarni saralash boti)
-CMD ["python", "-m", "leadbot.main"]
+# Fly'da ishga tushiriladigan bot: Comfort HR — nomzodlarni vakansiya talablari
+# bo'yicha saralash + (sozlangan bo'lsa) amoCRM jarayon nazorati
+CMD ["python", "-m", "app.main"]

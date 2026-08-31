@@ -19,6 +19,22 @@ class Settings(BaseSettings):
     admin_telegram_ids: list[int] = Field(default_factory=list, alias="ADMIN_TELEGRAM_IDS")
     management_chat_id: int | None = Field(default=None, alias="MANAGEMENT_CHAT_ID")
 
+    # --- Nomzodlarni saralash (vakansiya filteri) ---
+    # Yosh chegarasi (default 18-30)
+    candidate_min_age: int = Field(default=18, alias="CANDIDATE_MIN_AGE")
+    candidate_max_age: int = Field(default=30, alias="CANDIDATE_MAX_AGE")
+    # Nomzod doimiy istiqomat qilishi shart bo'lgan shahar
+    candidate_city: str = Field(default="Toshkent", alias="CANDIDATE_CITY")
+    # Nomzod kartasi yuboriladigan HR guruh. Bo'sh bo'lsa MANAGEMENT_CHAT_ID,
+    # undan keyin LEAD_GROUP_CHAT_ID (eski Fly sozlamalari) ishlatiladi.
+    candidates_chat_id: int | None = Field(default=None, alias="CANDIDATES_CHAT_ID")
+
+    # --- Fly iloji (eski mustaqil lead-bot muhit o'zgaruvchilari) ---
+    # BOT_TOKEN to'ldirilmagan bo'lsa LEADBOT_TOKEN ishlatiladi — Comfort HR
+    # boti nomzodlar bilan ham, xodimlar bilan ham shu token orqali ishlaydi.
+    leadbot_token: str = Field(default="", alias="LEADBOT_TOKEN")
+    lead_group_chat_id: int = Field(default=0, alias="LEAD_GROUP_CHAT_ID")
+
     # --- Baza ---
     database_url: str = Field(
         default="sqlite+aiosqlite:///./data/comfort_hr.db", alias="DATABASE_URL"
@@ -74,6 +90,20 @@ class Settings(BaseSettings):
             return None
         return int(value)
 
+    @field_validator("candidates_chat_id", mode="before")
+    @classmethod
+    def _parse_candidates_chat_id(cls, value: object) -> int | None:
+        if value is None or value == "":
+            return None
+        return int(value)
+
+    @field_validator("lead_group_chat_id", mode="before")
+    @classmethod
+    def _parse_lead_group_chat_id(cls, value: object) -> int:
+        if value is None or value == "":
+            return 0
+        return int(value)
+
     @field_validator("amo_first_status_id", mode="before")
     @classmethod
     def _parse_status_id(cls, value: object) -> int | None:
@@ -94,6 +124,22 @@ class Settings(BaseSettings):
         if not self.amo_subdomain:
             return False
         return bool(self.amo_long_token or (self.amo_client_id and self.amo_client_secret))
+
+    @property
+    def effective_bot_token(self) -> str:
+        """Asosiy token; BOT_TOKEN bo'sh bo'lsa eski LEADBOT_TOKEN ishlatiladi."""
+        return self.bot_token or self.leadbot_token
+
+    @property
+    def candidates_group_chat_id(self) -> int | None:
+        """Nomzod kartalari yuboriladigan HR guruh ID si (fallback zanjiri bilan)."""
+        if self.candidates_chat_id:
+            return self.candidates_chat_id
+        if self.management_chat_id:
+            return self.management_chat_id
+        if self.lead_group_chat_id:
+            return self.lead_group_chat_id
+        return None
 
 
 @lru_cache

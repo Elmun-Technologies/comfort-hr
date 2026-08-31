@@ -101,11 +101,12 @@ ergashib funksiya yozib, `ALL_RULES` ro'yxatiga qo'shish kifoya.
 app/
   amocrm/       amoCRM OAuth, API mijozi, sinxronizatsiya
   bot/          Telegram bot: handlerlar, klaviaturalar, FSM
+  candidates/   Nomzodlarni vakansiya talablari bo'yicha saralash (quyida)
   services/     Biznes mantiq: qoidalar, targetlar, hisobotlar
   scheduler/    Davriy vazifalar (APScheduler)
   web/          amoCRM webhook qabul qiluvchi (FastAPI)
   db/           SQLAlchemy modellari va sessiya
-leadbot/        Facebook reklama uchun lead-qualification bot (mustaqil, quyida)
+leadbot/        Eski mustaqil lead-bot (noyob; compat: LEADBOT_TOKEN)
 tests/          pytest testlari
 ```
 
@@ -119,19 +120,18 @@ pytest
 
 ---
 
-## Lead-bot — Facebook reklamadan kelgan nomzodlarni saralash
+## Nomzodlarni saralash (vakansiya filteri)
 
-Yuqoridagi amoCRM nazorat botidan **butunlay mustaqil**, alohida, oddiy bot:
-Facebook (Meta) reklamasini ko'rgan odam Telegram botga o'tadi, bot bir necha
-savol beradi, javoblarni vakansiya talablari bilan solishtiradi va natijani
-(mos yoki mos emasligi, sabablari bilan) to'g'ridan-to'g'ri Telegram guruhga
-yuboradi. amoCRM yoki bazaga ehtiyoj yo'q.
+Comfort HR botining o'z ichidagi bo'lim: Facebook (Meta) reklamasi orqali
+kelgan nomzod Telegram botga `/start` yuboradi, bot bir nechta savol beradi,
+javoblarni vakansiya talablari bilan solishtiradi va natijani (mos yoki mos
+emasligi, sabablari bilan) nomzodga aytadi, to'liq kartani esa HR guruhiga
+yuboradi. AmmoCRM yoki xodim rollari shu oqim uchun kerak emas.
 
 ```
 Facebook reklama → "Botga yozish" tugmasi → Telegram bot (t.me/BOTUSERNAME)
                                                     │
-                                     Savollar: ism, yosh, shahar,
-                                     telefon, ish grafigiga rozilikmi
+                     Savollar: ism, jins, yosh, shahar, telefon, staj, rezume
                                                     │
                                           Talablar bilan solishtirish
                                                     │
@@ -141,34 +141,52 @@ Facebook reklama → "Botga yozish" tugmasi → Telegram bot (t.me/BOTUSERNAME)
                                                                 (🟢 mos / 🔴 mos emas + sabab)
 ```
 
+### Filter (suhbat oqimi)
+
+```
+1️⃣ Ism → 2️⃣ Jins (👨 Erkak / 👩 Ayol tugmalari) → 3️⃣ Yosh →
+4️⃣ Shahar (Ha/Yo'q) → 5️⃣ Telefon → 6️⃣ Staj (matn yozadi) →
+7️⃣ Rezume (fayl PDF/DOC yoki golos — ovozli xabar) → ✅ Natija
+```
+
+Ish grafigi bo'yicha savol berilmaydi. Yosh chegarasi **18-30**
+(`CANDIDATE_MIN_AGE` / `CANDIDATE_MAX_AGE`).
+
 ### Ishga tushirish
 
-1. [@BotFather](https://t.me/BotFather) orqali yangi bot yarating, tokenni oling.
-2. Natijalar yuboriladigan Telegram guruhni yarating, botni guruhga admin
-   qilib qo'shing, guruh ID sini oling (masalan `@getmyid_bot` yoki botni
-   guruhga qo'shib `/start` dan keyin update'lardan ko'rish orqali).
-3. `.env` fayliga to'ldiring:
+1. Bot tokeni: asosiy `BOT_TOKEN` (eski `LEADBOT_TOKEN` sozlangan bo'lsa,
+   `BOT_TOKEN` to'ldirilmaganda avtomatik u ishlatiladi — eski Fly sozlamalari
+   o'zgarmasdan ishlaydi).
+2. Nomzod kartalari yuboriladigan HR guruh: botni guruhga admin qilib
+   qo'shing va guruh ID sini oling (masalan `-1001234567890`), keyin
+   `.env` fayliga:
    ```
-   LEADBOT_TOKEN=...
-   LEAD_GROUP_CHAT_ID=-100...
-   LEAD_MIN_AGE=18
-   LEAD_MAX_AGE=25
-   LEAD_REQUIRED_CITY=Toshkent
+   BOT_TOKEN=...
+   CANDIDATES_CHAT_ID=-100...
+   CANDIDATE_MIN_AGE=18
+   CANDIDATE_MAX_AGE=30
+   CANDIDATE_CITY=Toshkent
    ```
-4. Ishga tushiring:
+   `CANDIDATES_CHAT_ID` bo'sh qoldirilsa `MANAGEMENT_CHAT_ID`, undan keyin
+   `LEAD_GROUP_CHAT_ID` (eski sozlama) ishlatiladi.
+3. Ishga tushiring:
    ```bash
-   python -m leadbot.main
+   python -m app.main
    ```
-5. Facebook reklama sozlamalarida (Meta Ads Manager) "Click to Messenger" o'rniga
-   "Click to Telegram" tugmasi/veb-sayt havolasi sifatida
-   `https://t.me/BOTUSERNAME` ni ko'rsating — reklamani ko'rgan odam
-   to'g'ridan-to'g'ri botga tushadi va `/start` bilan suhbat boshlanadi.
+   Docker/Fly: `Dockerfile` asosan `python -m app.main` ni ishga tushiradi.
+4. Facebook reklama sozlamalarida (Meta Ads Manager) "Click to Telegram"
+   tugmasi/veb-sayt havolasi sifatida `https://t.me/BOTUSERNAME` ni
+   ko'rsating — reklamani ko'rgan odam to'g'ridan-to'g'ri botga tushadi va
+   `/start` bilan ariza boshlanadi.
+
+Xodimlar uchun taklif kodi oqimi o'zgarishsiz qoladi: `/start <kod>` yuborgan
+xodim nomzod arizasiga emas, o'z menyusiga tushadi.
 
 ### 📊 Analitika
 
-Har bir topshirilgan ariza SQLite bazaga saqlanadi (`LEAD_DB_PATH`, default:
-`./data/leadbot.db`). **Guruhdagi istalgan a'zo** (admin bo'lmasa ham) `/stats`
-buyrug'ini yuborib, umumiy statistikani ko'ra oladi:
+Har bir topshirilgan ariza asosiy bazaga (`DATABASE_URL`, default:
+`./data/comfort_hr.db`) saqlanadi. **HR guruhidagi istalgan a'zo** (admin
+bo'lmasa ham) `/stats` buyrug'ini yuborib, umumiy statistikani ko'ra oladi:
 
 ```
 📊 ANALITIKA
@@ -181,22 +199,31 @@ buyrug'ini yuborib, umumiy statistikani ko'ra oladi:
 🚫 Rad etish sabablari:
 • Yosh chegarasidan tashqari: 12
 • Toshkentda yashamaydi: 6
-• Grafikka rozi emas: 4
 
 🕘 Oxirgi 10 nomzod:
-🟢 Aliyev Vali — 22 yosh
+🟢 Aliyev Vali (Erkak) — 22 yosh
 🔴 ...
 ```
 
-`/stats` faqat `LEAD_GROUP_CHAT_ID` guruhida ishlaydi. Analitika vaqt mintaqasi
-`LEAD_TZ` (default: `Asia/Tashkent`) orqali sozlanadi. Docker/Fly.io'da
-ma'lumot yo'qolmasligi uchun `/app/data` katalogini doimiy volume'ga ulash
-tavsiya etiladi.
+`/stats` faqat HR guruhida ishlaydi. Analitika vaqt mintaqasi `TZ`
+(default: `Asia/Tashkent`) orqali sozlanadi. Docker/Fly.io'da ma'lumot
+yo'qolmasligi uchun `/app/data` katalogini doimiy volume'ga ulash tavsiya
+etiladi.
 
 ### Talab mezonlarini o'zgartirish
 
-Savollar va matnlar `leadbot/texts.py` da, saralash mantig'i
-`leadbot/qualify.py` da — yosh chegarasi va shahar talabi `.env` orqali
-(`LEAD_MIN_AGE`, `LEAD_MAX_AGE`, `LEAD_REQUIRED_CITY`) sozlanadi. Boshqa
-vakansiya uchun savol qo'shish kerak bo'lsa, `leadbot/states.py` ga yangi
-holat, `leadbot/handlers.py` ga tegishli handler qo'shiladi.
+Savollar va matnlar `app/candidates/texts.py` da, saralash mantig'i
+`app/candidates/qualify.py` da — yosh chegarasi va shahar talabi `.env`
+orqali (`CANDIDATE_MIN_AGE`, `CANDIDATE_MAX_AGE`, `CANDIDATE_CITY`)
+sozlanadi. Boshqa vakansiya uchun savol qo'shish kerak bo'lsa,
+`app/candidates/states.py` ga yangi holat, `app/bot/handlers/candidates.py`
+ga tegishli handler qo'shiladi.
+
+### Eski mustaqil lead-bot (noyob)
+
+`leadbot/` moduli (Facebook nomzodlar uchun alohida bot) endi tavsiya
+etilmaydi — hamma narsa asosiy Comfort HR boti ichida ishlaydi. Modul kod
+sifatida saqlan qolgan: `python -m leadbot.main` bilan qo'lda ishga
+tushirish mumkin. Fly sozlamalaridagi eski `LEADBOT_TOKEN` /
+`LEAD_GROUP_CHAT_ID` o'zgaruvchilari iloji sifatida avtomatik tan olinadi,
+shuning uchun deploy'dan oldin `.env` ni o'zgartirish shart emas.

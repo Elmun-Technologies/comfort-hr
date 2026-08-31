@@ -10,7 +10,7 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-from leadbot.texts import BTN_MALE, BTN_FEMALE, BTN_NO, BTN_SHARE_CONTACT, BTN_YES, BTN_SKIP_RESUME
+from leadbot.texts import BTN_FEMALE, BTN_MALE, BTN_NO, BTN_SHARE_CONTACT, BTN_SKIP_RESUME, BTN_YES
 
 YES_NO_KB = InlineKeyboardMarkup(
     inline_keyboard=[
