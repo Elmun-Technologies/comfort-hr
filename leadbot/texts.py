@@ -14,6 +14,9 @@ WELCOME = (
 )
 
 ASK_FULL_NAME = "1️⃣ Ism va familiyangizni to'liq kiriting:"
+ASK_FULL_NAME_INVALID = (
+    "Ism va familiya 3 dan 80 belgigacha bo'lishi kerak. Iltimos, qaytadan kiriting:"
+)
 ASK_GENDER = "2️⃣ Jinsingizni tanlang:"
 ASK_AGE = "3️⃣ Necha yoshdasiz? (faqat raqamda, masalan: 22)"
 ASK_AGE_INVALID = "Iltimos, yoshingizni faqat raqamda kiriting (masalan: 22)."
@@ -26,6 +29,9 @@ ASK_PHONE_INVALID = "Telefon raqami noto'g'ri formatda. Masalan: +998901234567"
 ASK_EXPERIENCE = (
     "6️⃣ Ish tajribangiz (staj) bormi? Qisqacha yozib bering:\n"
     "(Masalan: \"2 yil sotuvchi\", \"3 oy dastavka\", \"tajribam yo'q\")"
+)
+ASK_EXPERIENCE_INVALID = (
+    "Iltimos, ish tajribangiz haqida qisqacha yozing (1-500 belgi)."
 )
 ASK_RESUME = (
     "7️⃣ Rezume yoki tajribangiz haqida ovozli xabar (goloso) yuborishingiz mumkin.\n"

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from leadbot.qualify import Answers, Verdict
@@ -115,51 +115,79 @@ def count_applications(db_path: str) -> int:
         conn.close()
 
 
-def _fetch_all(db_path: str) -> list[sqlite3.Row]:
-    conn = _connect(db_path)
-    try:
-        cur = conn.execute("SELECT * FROM applications ORDER BY id DESC")
-        return cur.fetchall()
-    finally:
-        conn.close()
+# /stats hisobotida ko'rsatiladigan so'nggi arizalar soni
+RECENT_LIMIT = 10
+# Har bir nomni shu uzunlikdan uzun bo'lsa qisqartiramiz (Telegram xabar limitidan
+# himoya — o'nlab uzun ismlar ham hisobotni 4096 belgidan oshirib yubormasligi uchun)
+MAX_DISPLAY_NAME_LENGTH = 40
 
 
-def _parse_dt(value: str) -> datetime:
-    return datetime.fromisoformat(value)
+def _truncate(text: str, limit: int = MAX_DISPLAY_NAME_LENGTH) -> str:
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
 def build_report(db_path: str, tz: ZoneInfo) -> str:
-    """Umumiy analitika hisobotini (matn) qaytaradi."""
-    rows = _fetch_all(db_path)
-    total = len(rows)
-    if total == 0:
-        return "📊 <b>Analitika</b>\n\nHali hech qanday ariza topshirilmagan."
+    """Umumiy analitika hisobotini (matn) qaytaradi.
 
-    qualified = sum(1 for r in rows if r["is_qualified"])
-    rejected = total - qualified
-    now = datetime.now(tz)
-
-    # Reject sabablari bo'yicha taqsimot
-    reject_counts: dict[str, int] = {}
-    for r in rows:
-        codes = [c for c in (r["reject_codes"] or "").split(",") if c]
-        for code in codes:
-            reject_counts[code] = reject_counts.get(code, 0) + 1
-
-    today = sum(
-        1 for r in rows if _parse_dt(r["created_at"]).astimezone(tz).date() == now.date()
-    )
-
-    # Oxirgi 10 ta ariza (eng yangi birinchi)
+    Butun jadvalni Python'ga yuklamaslik uchun jamlanmalar SQL orqali
+    hisoblanadi, so'nggi arizalar esa `LIMIT`li so'rov bilan olinadi.
+    """
     from leadbot.texts import GENDER_LABELS
 
+    conn = _connect(db_path)
+    try:
+        total = int(conn.execute("SELECT COUNT(*) FROM applications").fetchone()[0])
+        if total == 0:
+            return "📊 <b>Analitika</b>\n\nHali hech qanday ariza topshirilmagan."
+
+        qualified = int(
+            conn.execute(
+                "SELECT COUNT(*) FROM applications WHERE is_qualified = 1"
+            ).fetchone()[0]
+        )
+        rejected = total - qualified
+
+        # Bugungi kunni mahalliy vaqt mintaqasida hisoblab, UTC chegaralarga
+        # o'tkazamiz — created_at ustuni doim UTC ISO satr sifatida saqlanadi,
+        # shu format lug'aviy taqqoslashda ham xronologik tartibga mos keladi.
+        now_local = datetime.now(tz)
+        start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_local = start_local + timedelta(days=1)
+        today = int(
+            conn.execute(
+                "SELECT COUNT(*) FROM applications WHERE created_at >= ? AND created_at < ?",
+                (start_local.astimezone(UTC).isoformat(), end_local.astimezone(UTC).isoformat()),
+            ).fetchone()[0]
+        )
+
+        # Reject sabablari bo'yicha taqsimot — bog'langan qiymatlar bilan
+        # chegaralangan (LIKE) so'rovlar, to'liq jadval o'qilmaydi
+        reject_counts: dict[str, int] = {}
+        for code in REJECT_LABELS:
+            cnt = int(
+                conn.execute(
+                    "SELECT COUNT(*) FROM applications "
+                    "WHERE (',' || reject_codes || ',') LIKE ('%,' || ? || ',%')",
+                    (code,),
+                ).fetchone()[0]
+            )
+            if cnt:
+                reject_counts[code] = cnt
+
+        recent_rows = conn.execute(
+            "SELECT full_name, gender, age, is_qualified FROM applications "
+            "ORDER BY id DESC LIMIT ?",
+            (RECENT_LIMIT,),
+        ).fetchall()
+    finally:
+        conn.close()
+
     recent_lines = []
-    for r in rows[:10]:
+    for r in recent_rows:
         mark = "🟢" if r["is_qualified"] else "🔴"
-        gender = r["gender"] if "gender" in r.keys() else ""
-        gender_label = GENDER_LABELS.get(gender, "")
+        gender_label = GENDER_LABELS.get(r["gender"] or "", "")
         gender_str = f" ({gender_label})" if gender_label else ""
-        recent_lines.append(f"{mark} {r['full_name']}{gender_str} — {r['age']} yosh")
+        recent_lines.append(f"{mark} {_truncate(r['full_name'])}{gender_str} — {r['age']} yosh")
 
     lines = [
         "📊 <b>ANALITIKA</b>\n",
