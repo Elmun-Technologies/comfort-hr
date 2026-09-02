@@ -12,4 +12,3 @@ class Application(StatesGroup):
     city = State()
     phone = State()
     experience = State()
-    resume = State()
