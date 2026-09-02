@@ -8,7 +8,8 @@ WELCOME = (
     "🧑🏻‍💼 Lavozim: Sotuvchi/Dastavka yigit\n"
     "💵 Oylik: 10 000 000 – 15 000 000 so'm\n"
     "⏰ Ish grafigi: 08:00–19:00, oyiga 1 kun dam\n"
-    "📌 Manzil: Toshkent, O'rikzor bozori atrofida\n\n"
+    "📌 Manzil: Toshkent, O'rikzor bozori atrofida\n"
+    "❗️ <b>Yotoqxona berilmaydi</b> — doimiy Toshkentda yashovchilar uchun\n\n"
     "Talablarga mos kelasizmi — buni bilish uchun bir nechta savol beraman. "
     "Javoblaringiz to'g'ridan-to'g'ri HR bo'limiga yuboriladi."
 )
@@ -20,23 +21,22 @@ ASK_FULL_NAME_INVALID = (
 ASK_GENDER = "2️⃣ Jinsingizni tanlang:"
 ASK_AGE = "3️⃣ Necha yoshdasiz? (faqat raqamda, masalan: 22)"
 ASK_AGE_INVALID = "Iltimos, yoshingizni faqat raqamda kiriting (masalan: 22)."
-ASK_CITY = "4️⃣ Doimiy Toshkent shahrida istiqomat qilasizmi? (Yotoqxona berilmaydi)"
+ASK_CITY = "4️⃣ Doimiy Toshkent shahrida istiqomat qilasizmi? (<b>Yotoqxona berilmaydi</b>)"
 ASK_PHONE = (
     "5️⃣ Telefon raqamingizni yuboring — pastdagi tugma orqali yoki qo'lda kiriting "
     "(masalan: +998901234567):"
 )
 ASK_PHONE_INVALID = "Telefon raqami noto'g'ri formatda. Masalan: +998901234567"
+PHONE_RECEIVED = "✅ Telefon qabul qilindi."
 ASK_EXPERIENCE = (
-    "6️⃣ Ish tajribangiz (staj) bormi? Qisqacha yozib bering:\n"
-    "(Masalan: \"2 yil sotuvchi\", \"3 oy dastavka\", \"tajribam yo'q\")"
+    "6️⃣ Oxirgi qadam — ish tajribangiz haqida <b>ovozli xabar</b> yuboring: "
+    "necha yil, qayerda va kim bo'lib ishlaganingizni gapirib bering. "
+    "HR ovozingizni tinglab xulosa chiqaradi.\n\n"
+    "Rezyumeingiz (PDF yoki Word fayl) bo'lsa, o'rniga shuni yuborishingiz mumkin.\n"
+    "Ovozli xabar yoki fayl imkoni bo'lmasa, shu yerga qisqacha yozib bering."
 )
 ASK_EXPERIENCE_INVALID = (
-    "Iltimos, ish tajribangiz haqida qisqacha yozing (1-500 belgi)."
-)
-ASK_RESUME = (
-    "7️⃣ Rezume yoki tajribangiz haqida ovozli xabar (goloso) yuborishingiz mumkin.\n"
-    "Shuningdek, fayl (PDF, DOC) ko'rinishida ham yuborishingiz mumkin.\n\n"
-    "Agar yubormoqchi bo'lmasangiz, pastdagi tugmani bosing 👇"
+    "Iltimos, ovozli xabar, rezyume fayli yuboring yoki tajribangiz haqida qisqacha yozing (1-500 belgi)."
 )
 
 BTN_YES = "✅ Ha"

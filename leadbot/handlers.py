@@ -138,8 +138,7 @@ async def on_phone_contact(message: Message, state: FSMContext) -> None:
         await message.answer(texts.ASK_PHONE_INVALID, reply_markup=CONTACT_KB)
         return
     await state.update_data(phone=phone)
-    await message.answer(texts.ASK_EXPERIENCE)
-    await state.set_state(Application.experience)
+    await _ask_experience(message, state)
 
 
 @router.message(Application.phone, F.text)
@@ -149,63 +148,59 @@ async def on_phone_text(message: Message, state: FSMContext) -> None:
         await message.answer(texts.ASK_PHONE_INVALID, reply_markup=CONTACT_KB)
         return
     await state.update_data(phone=phone)
-    await message.answer(texts.ASK_EXPERIENCE)
+    await _ask_experience(message, state)
+
+
+async def _ask_experience(message: Message, state: FSMContext) -> None:
+    # Avval "Raqamni yuborish" doimiy tugmasini ekrandan tozalaymiz — aks holda
+    # keyingi bosqichlarda ham osti panelida osilib qolib, nomzodlarni chalg'itadi.
+    await message.answer(texts.PHONE_RECEIVED, reply_markup=REMOVE_KB)
+    await message.answer(texts.ASK_EXPERIENCE, reply_markup=RESUME_SKIP_KB)
     await state.set_state(Application.experience)
 
 
-# ─── 6. Ish tajribasi (staj) ─────────────────────────────────────────
+# ─── 6. Ish tajribasi: golos / rezyume / matn ────────────────────────
 
 
-@router.message(Application.experience, F.text)
-async def on_experience(message: Message, state: FSMContext) -> None:
-    experience = message.text.strip()
-    if not (MIN_EXPERIENCE_LENGTH <= len(experience) <= MAX_EXPERIENCE_LENGTH):
-        await message.answer(texts.ASK_EXPERIENCE_INVALID)
-        return
-    await state.update_data(experience=experience)
-    await message.answer(texts.ASK_RESUME, reply_markup=RESUME_SKIP_KB)
-    await state.set_state(Application.resume)
-
-
-# ─── 7. Rezume / Golos ───────────────────────────────────────────────
-
-
-@router.callback_query(Application.resume, F.data == "skip_resume")
-async def on_resume_skip(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(resume_info="")
+@router.callback_query(Application.experience, F.data == "skip_resume")
+async def on_experience_skip(callback: CallbackQuery, state: FSMContext) -> None:
+    await state.update_data(experience="", resume_info="")
     await callback.message.edit_reply_markup(reply_markup=None)
     await callback.answer()
     await _finish_application(callback, state)
 
 
-@router.message(Application.resume, F.voice)
-async def on_resume_voice(message: Message, state: FSMContext) -> None:
-    await state.update_data(resume_info="🎤 Ovozli xabar yuborildi")
+@router.message(Application.experience, F.voice)
+async def on_experience_voice(message: Message, state: FSMContext) -> None:
+    await state.update_data(experience="🎤 Ovozli xabar orqali tushuntirildi", resume_info="")
     # Ovozli xabarni guruhga ham forward qilish uchun file_id saqlaymiz
     await state.update_data(voice_file_id=message.voice.file_id)
     await _finish_application_msg(message, state)
 
 
-@router.message(Application.resume, F.audio)
-async def on_resume_audio(message: Message, state: FSMContext) -> None:
+@router.message(Application.experience, F.audio)
+async def on_experience_audio(message: Message, state: FSMContext) -> None:
     filename = message.audio.file_name or "audio"
-    await state.update_data(resume_info=f"🎵 Audio fayl: {filename}")
+    await state.update_data(experience=f"🎵 Audio fayl orqali tushuntirildi: {filename}", resume_info="")
     await state.update_data(voice_file_id=message.audio.file_id)
     await _finish_application_msg(message, state)
 
 
-@router.message(Application.resume, F.document)
-async def on_resume_document(message: Message, state: FSMContext) -> None:
+@router.message(Application.experience, F.document)
+async def on_experience_document(message: Message, state: FSMContext) -> None:
     filename = message.document.file_name or "document"
-    await state.update_data(resume_info=f"📄 Fayl: {filename}")
+    await state.update_data(experience="", resume_info=f"📄 Rezyume fayli: {filename}")
     await state.update_data(document_file_id=message.document.file_id)
     await _finish_application_msg(message, state)
 
 
-@router.message(Application.resume, F.text)
-async def on_resume_text(message: Message, state: FSMContext) -> None:
-    # Agar matn yuborsa — skip deb hisoblaymiz
-    await state.update_data(resume_info="")
+@router.message(Application.experience, F.text)
+async def on_experience_text(message: Message, state: FSMContext) -> None:
+    experience = message.text.strip()
+    if not (MIN_EXPERIENCE_LENGTH <= len(experience) <= MAX_EXPERIENCE_LENGTH):
+        await message.answer(texts.ASK_EXPERIENCE_INVALID)
+        return
+    await state.update_data(experience=experience, resume_info="")
     await _finish_application_msg(message, state)
 
 
