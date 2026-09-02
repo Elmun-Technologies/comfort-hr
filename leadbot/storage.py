@@ -210,3 +210,58 @@ def build_report(db_path: str, tz: ZoneInfo) -> str:
         lines.extend(recent_lines)
 
     return "\n".join(lines)
+
+
+# /qidir buyrug'ida bittа so'rovda qaytariladigan maksimal natija soni
+SEARCH_LIMIT = 20
+# Har bir natijada staj matnini shu uzunlikkacha qisqartiramiz — 20 ta natija
+# bilan ham hisobot Telegram'ning 4096 belgili sendMessage limitidan oshmasin
+MAX_EXPERIENCE_DISPLAY_LENGTH = 80
+
+
+def search_by_experience(db_path: str, keyword: str) -> list[sqlite3.Row]:
+    """Staj matnida (faqat qo'lda yozilgan javoblarda) kalit so'zni qidiradi.
+
+    Ovozli xabar yoki rezyume fayl orqali yuborilgan tajriba bu qidiruvga
+    kirmaydi — bot ularning ichidagi matnni bilmaydi (transkripsiya yo'q).
+    Faqat sifat bo'yicha bog'langan (?) LIKE so'rovi ishlatiladi, SQL
+    in'ektsiyadan himoyalangan.
+    """
+    conn = _connect(db_path)
+    try:
+        pattern = f"%{keyword}%"
+        return conn.execute(
+            "SELECT full_name, age, phone, experience, is_qualified FROM applications "
+            "WHERE experience LIKE ? COLLATE NOCASE "
+            "ORDER BY id DESC LIMIT ?",
+            (pattern, SEARCH_LIMIT),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def build_search_report(db_path: str, keyword: str) -> str:
+    """`/qidir <so'z>` uchun natijalar hisobotini (matn) qaytaradi."""
+    rows = search_by_experience(db_path, keyword)
+    safe_keyword = _truncate(keyword, 60)
+
+    if not rows:
+        return (
+            f'🔍 <b>Qidiruv: "{safe_keyword}"</b>\n\n'
+            "Hech qanday natija topilmadi (faqat qo'lda yozilgan staj javoblari "
+            "orasida qidiriladi — ovozli xabarlar bu yerga kirmaydi)."
+        )
+
+    lines = [f'🔍 <b>Qidiruv: "{safe_keyword}"</b> — {len(rows)} ta natija\n']
+    for r in rows:
+        mark = "🟢" if r["is_qualified"] else "🔴"
+        experience = _truncate(r["experience"] or "", MAX_EXPERIENCE_DISPLAY_LENGTH)
+        lines.append(
+            f"{mark} {_truncate(r['full_name'])} — {r['age']} yosh — {r['phone']}\n"
+            f"   💼 {experience}"
+        )
+
+    if len(rows) == SEARCH_LIMIT:
+        lines.append(f"\n⚠️ Faqat so'nggi {SEARCH_LIMIT} ta natija ko'rsatildi.")
+
+    return "\n".join(lines)

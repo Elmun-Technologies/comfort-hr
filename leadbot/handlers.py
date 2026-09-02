@@ -7,7 +7,7 @@ import re
 from datetime import UTC, datetime
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -16,7 +16,7 @@ from leadbot.config import LeadBotSettings, get_leadbot_settings
 from leadbot.keyboards import CONTACT_KB, GENDER_KB, REMOVE_KB, RESUME_SKIP_KB, YES_NO_KB
 from leadbot.qualify import Answers, Verdict, qualify
 from leadbot.states import Application
-from leadbot.storage import add_application, build_report
+from leadbot.storage import add_application, build_report, build_search_report
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,25 @@ async def cmd_stats(message: Message) -> None:
     except Exception:  # noqa: BLE001
         logger.exception("Analitika hisobotini tuzish yoki yuborishda xato")
         await message.answer(texts.STATS_ERROR)
+
+
+@router.message(Command("qidir"))
+async def cmd_search(message: Message, command: CommandObject) -> None:
+    """Staj matnida kalit so'z bo'yicha qidirish — faqat guruh chatida ishlaydi."""
+    settings = get_leadbot_settings()
+    if message.chat.id != settings.lead_group_chat_id:
+        await message.answer(texts.SEARCH_GROUP_ONLY)
+        return
+    keyword = (command.args or "").strip()
+    if not keyword:
+        await message.answer(texts.SEARCH_USAGE, parse_mode="HTML")
+        return
+    try:
+        report = build_search_report(settings.lead_db_path, keyword)
+        await message.answer(report, parse_mode="HTML")
+    except Exception:  # noqa: BLE001
+        logger.exception("Qidiruvda xato (so'z=%r)", keyword)
+        await message.answer(texts.SEARCH_ERROR)
 
 
 # ─── 1. Ism ──────────────────────────────────────────────────────────

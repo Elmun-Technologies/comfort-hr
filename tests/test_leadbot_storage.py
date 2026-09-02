@@ -8,7 +8,13 @@ import tempfile
 from zoneinfo import ZoneInfo
 
 from leadbot.qualify import Answers, qualify
-from leadbot.storage import add_application, build_report, count_applications, init_db
+from leadbot.storage import (
+    add_application,
+    build_report,
+    build_search_report,
+    count_applications,
+    init_db,
+)
 
 CRITERIA = {"min_age": 18, "max_age": 30, "required_city": "Toshkent"}
 
@@ -151,3 +157,50 @@ def test_migrate_adds_missing_columns_to_old_database() -> None:
     answers = _answers()
     add_application(path, answers, qualify(answers, **CRITERIA))
     assert count_applications(path) == 1
+
+
+def test_search_finds_matching_experience_case_insensitive() -> None:
+    path = _tmp_db()
+    init_db(path)
+    a = _answers(full_name="Qurilishchi Aka", experience="3 yil Qurilishda ishlagan")
+    b = _answers(full_name="Sotuvchi Uka", experience="2 yil do'konda sotuvchi")
+    add_application(path, a, qualify(a, **CRITERIA))
+    add_application(path, b, qualify(b, **CRITERIA))
+
+    report = build_search_report(path, "qurilish")
+    assert "Qurilishchi Aka" in report
+    assert "Sotuvchi Uka" not in report
+
+
+def test_search_no_match_reports_empty() -> None:
+    path = _tmp_db()
+    init_db(path)
+    a = _answers(experience="2 yil sotuvchi")
+    add_application(path, a, qualify(a, **CRITERIA))
+
+    report = build_search_report(path, "haydovchi")
+    assert "topilmadi" in report
+
+
+def test_search_ignores_voice_placeholder_experience() -> None:
+    """Ovozli xabar orqali kelgan javob (placeholder matn) qidiruvda chiqmasligi kerak."""
+    path = _tmp_db()
+    init_db(path)
+    voice_answer = _answers(experience="🎤 Ovozli xabar orqali tushuntirildi")
+    add_application(path, voice_answer, qualify(voice_answer, **CRITERIA))
+
+    report = build_search_report(path, "qurilish")
+    assert "topilmadi" in report
+
+
+def test_search_results_are_bounded_and_truncated() -> None:
+    path = _tmp_db()
+    init_db(path)
+    long_experience = "qurilish " + "A" * 200
+    for i in range(25):
+        answers = _answers(full_name=f"Nomzod {i}", experience=long_experience)
+        add_application(path, answers, qualify(answers, **CRITERIA))
+
+    report = build_search_report(path, "qurilish")
+    assert report.count("Nomzod") == 20
+    assert len(report) < 4096
