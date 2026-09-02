@@ -78,3 +78,15 @@ STATS_GROUP_ONLY = (
     "Guruhga /stats deb yozing."
 )
 STATS_ERROR = "Kechirasiz, analitika hisobotini tuzishda xato yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
+
+SEARCH_GROUP_ONLY = (
+    "🔍 Qidiruvni faqat guruh chatida ishlatish mumkin. "
+    "Guruhga /qidir <so'z> deb yozing."
+)
+SEARCH_USAGE = (
+    "Foydalanish: <code>/qidir so'z</code>\n"
+    "Masalan: <code>/qidir qurilish</code> yoki <code>/qidir sotuv</code>\n\n"
+    "Eslatma: faqat qo'lda (matn) yozilgan staj javoblari orasida qidiriladi — "
+    "ovozli xabarlar bu yerga kirmaydi."
+)
+SEARCH_ERROR = "Kechirasiz, qidiruvda xato yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
